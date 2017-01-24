@@ -69,6 +69,7 @@ import java.util.TimeZone;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -6656,8 +6657,8 @@ final class TDSReader
 	private boolean serverSupportsColumnEncryption = false;
 
 	private final byte valueBytes[] = new byte[256];
-	private static int lastReaderID = 0;
-	private synchronized static int nextReaderID() { return ++lastReaderID; }
+	private static final AtomicInteger lastReaderID = new AtomicInteger(0);
+	private static int nextReaderID() { return lastReaderID.incrementAndGet(); }
 
 
 	TDSReader(TDSChannel tdsChannel, SQLServerConnection con, TDSCommand command)
@@ -6902,6 +6903,19 @@ final class TDSReader
 		return available;
 	}
 
+    /**
+     * 
+     * @return number of bytes available in the current packet
+     */
+    final int availableCurrentPacket() {
+        /*
+         * The number of bytes that can be read from the current chunk, without including the next chunk that is buffered. This is so the driver can
+         * confirm if the next chunk sent is new packet or just continuation
+         */
+        int available = currentPacket.payloadLength - payloadOffset;
+        return available;
+    }
+    
 	final int peekTokenType() throws SQLServerException
 	{
 		// Check whether we're at EOF
