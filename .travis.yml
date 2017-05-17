@@ -4,6 +4,10 @@ language: java
 jdk:
   - oraclejdk8
 
+os:
+  - linux
+  - osx
+  
 services:
   - docker
 
