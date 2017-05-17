@@ -11,11 +11,12 @@ matrix:
   - os: linux
     sudo: required
     jdk: oraclejdk8
+    services: docker
   - os: osx
     osx_image: xcode8.3
   
-services:
-  - docker
+#services:
+ # - docker
 
 env:
  global:	
@@ -29,15 +30,15 @@ install:
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Pbuild42
 
 before_script:
-  - docker pull microsoft/mssql-server-linux
-  - docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=<YourStrong!Passw0rd>' -p 1433:1433 -d microsoft/mssql-server-linux
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker pull microsoft/mssql-server-linux; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=<YourStrong!Passw0rd>' -p 1433:1433 -d microsoft/mssql-server-linux; fi
 
 script: 
-  - docker ps -a
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker ps -a; fi
   
 ##Test for JDBC Specification 41 & 42 and submit coverage report.
-  - mvn test -B -Pbuild41 jacoco:report && bash <(curl -s https://codecov.io/bash) -cF JDBC41
-  - mvn test -B -Pbuild42 jacoco:report && bash <(curl -s https://codecov.io/bash) -cF JDBC42
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mvn test -B -Pbuild41 jacoco:report && bash <(curl -s https://codecov.io/bash) -cF JDBC41; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mvn test -B -Pbuild42 jacoco:report && bash <(curl -s https://codecov.io/bash) -cF JDBC42; fi
 
 #after_success:
 # instead of after success we are using && operator for conditional submitting coverage report.
